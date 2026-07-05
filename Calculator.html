@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Последовательный Калькулятор</title>
+    <style>
+        body {
+            background-color: #000000;
+            color: #FF8C00; /* Темно-оранжевый для лучшей читаемости на черном */
+            font-family: Arial, sans-serif;
+            font-weight: bold; /* Шрифт BOLT */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: #000000;
+            border: 4px solid #FF8C00;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+        }
+
+        .author-tag {
+            text-align: center;
+            font-size: 20px;
+            color: #FF8C00;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .instruction {
+            background-color: #000000;
+            border: 2px solid #FF8C00;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #FFA500; /* Оранжевый */
+        }
+
+        .instruction p {
+            margin: 5px 0;
+        }
+
+        .calculator-box {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .display {
+            background-color: #000000;
+            border: 2px solid #FF8C00;
+            padding: 15px;
+            border-radius: 6px;
+            min-height: 40px;
+            font-size: 18px;
+            color: #FFA500;
+            word-wrap: break-word;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 16px;
+            color: #FFA500;
+        }
+
+        input[type="text"] {
+            background-color: #000000;
+            border: 2px solid #FFA500;
+            color: #FFA500;
+            padding: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: #FF8C00;
+        }
+
+        button {
+            background-color: #FF8C00;
+            color: #000000;
+            border: 2px solid #FF8C00;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        button:hover {
+            background-color: #000000;
+            color: #FF8C00;
+        }
+
+        .error-msg {
+            color: #000000;
+            background-color: #FF8C00;
+            padding: 8px;
+            border-radius: 4px;
+            display: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="author-tag">By Kry1zz</div>
+
+    <div class="instruction">
+        <p>1. Введи первое число и нажми Enter.</p>
+        <p>2. Введи второе число, а затем введи знак операции (+, -, *, /), который применится к этому числу.</p>
+        <p>3. Повторяй этот шаг сколько угодно: каждый раз сначала вводится новое число, а затем знак для него.</p>
+        <p>4. Для завершения расчетов и вывода итогового ответа просто введи = вместо числа.</p>
+    </div>
+
+    <div class="calculator-box">
+        <div class="display" id="displayScreen">Текущий результат: Еще не введен</div>
+        <div class="error-msg" id="errorBlock"></div>
+
+        <div class="input-group" id="numberGroup">
+            <label id="inputLabel" for="numberInput">Введи первое число (или '=' для выхода):</label>
+            <input type="text" id="numberInput" autocomplete="off" autofocus>
+            <button id="submitNumber">Ввести число</button>
+        </div>
+
+        <div class="input-group" id="operatorGroup" style="display: none;">
+            <label for="operatorInput">Введи оператор (+, -, *, /):</label>
+            <input type="text" id="operatorInput" autocomplete="off">
+            <button id="submitOperator">Ввести оператор</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Состояние программы (как в Python-скрипте)
+    let total = null;
+    let currentNumber = null;
+
+    // Элементы интерфейса
+    const displayScreen = document.getElementById('displayScreen');
+    const errorBlock = document.getElementById('errorBlock');
+    const numberGroup = document.getElementById('numberGroup');
+    const operatorGroup = document.getElementById('operatorGroup');
+    const numberInput = document.getElementById('numberInput');
+    const operatorInput = document.getElementById('operatorInput');
+    const submitNumberBtn = document.getElementById('submitNumber');
+    const submitOperatorBtn = document.getElementById('submitOperator');
+    const inputLabel = document.getElementById('inputLabel');
+
+    function showError(text) {
+        errorBlock.innerText = text;
+        errorBlock.style.display = 'block';
+    }
+
+    function hideError() {
+        errorBlock.style.display = 'none';
+    }
+
+    // Обработка ввода числа
+    function processNumber() {
+        hideError();
+        let numInput = numberInput.value.trim();
+
+        if (numInput === "=") {
+            if (total === null) {
+                displayScreen.innerText = "Финальный результат: null";
+            } else {
+                displayScreen.innerText = `Финальный результат: ${total}`;
+            }
+            numberGroup.style.display = 'none';
+            operatorGroup.style.display = 'none';
+            return;
+        }
+
+        let number;
+        if (numInput.includes(".")) {
+            number = parseFloat(numInput);
+        } else {
+            number = parseInt(numInput, 10);
+        }
+
+        if (isNaN(number)) {
+            showError("Это не похоже на число. Попробуй еще раз.");
+            numberInput.value = "";
+            return;
+        }
+
+        if (total === null) {
+            total = number;
+            displayScreen.innerText = `Текущий результат: ${total}`;
+            inputLabel.innerText = "Введи число (или '=' для выхода):";
+            numberInput.value = "";
+        } else {
+            currentNumber = number;
+            numberGroup.style.display = 'none';
+            operatorGroup.style.display = 'flex';
+            operatorInput.value = "";
+            operatorInput.focus();
+        }
+    }
+
+    // Обработка ввода оператора
+    function processOperator() {
+        hideError();
+        let op = operatorInput.value.trim();
+
+        if (!["+", "-", "*", "/"].includes(op)) {
+            showError("Неверный оператор! Используй только +, -, * или /");
+            operatorInput.value = "";
+            return;
+        }
+
+        // Вычисления
+        if (op === "+") {
+            total += currentNumber;
+        } else if (op === "-") {
+            total -= currentNumber;
+        } else if (op === "*") {
+            total *= currentNumber;
+        } else if (op === "/") {
+            if (currentNumber === 0) {
+                showError("Деление на ноль!");
+                operatorGroup.style.display = 'none';
+                numberGroup.style.display = 'flex';
+                numberInput.value = "";
+                numberInput.focus();
+                return;
+            }
+            total /= currentNumber;
+        }
+
+        displayScreen.innerText = `Результат: ${total}`;
+        
+        numberGroup.style.display = 'flex';
+        operatorGroup.style.display = 'none';
+        numberInput.value = "";
+        numberInput.focus();
+    }
+
+    submitNumberBtn.addEventListener('click', processNumber);
+    numberInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') processNumber();
+    });
+
+    submitOperatorBtn.addEventListener('click', processOperator);
+    operatorInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') processOperator();
+    });
+</script>
+
+</body>
+</html>
