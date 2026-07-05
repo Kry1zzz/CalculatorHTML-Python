@@ -1,6 +1,6 @@
 # CalculatorHTML
 Just my Beta version of calculator. I have python version and HTML
-By Kry1zz
+!By Kry1zz! 
 сначала вводится первое число
 затем вводится число
 потом выбирается операция для этого числа
